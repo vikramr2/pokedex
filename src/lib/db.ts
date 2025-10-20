@@ -21,21 +21,6 @@ export function getPool(): mysql.Pool {
         }
       : undefined;
 
-    console.log('Database config:', {
-      host: process.env.DB_HOST,
-      port: process.env.DB_PORT,
-      database: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD ? '***' : 'undefined',
-      ssl: ssl ? {
-        enabled: true,
-        ca: Boolean(ssl.ca),
-        cert: Boolean(ssl.cert),
-        key: Boolean(ssl.key),
-        rejectUnauthorized: ssl.rejectUnauthorized,
-      } : { enabled: false }
-    });
-
     pool = mysql.createPool({
       host: process.env.DB_HOST,
       port: parseInt(process.env.DB_PORT || '3306'),
