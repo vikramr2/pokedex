@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     // Get paginated results
     const pokemon = await query(
-      'SELECT * FROM pokemon ORDER BY "#" LIMIT $1 OFFSET $2',
+      'SELECT * FROM pokemon ORDER BY `#` LIMIT ? OFFSET ?',
       [limit, offset]
     );
 

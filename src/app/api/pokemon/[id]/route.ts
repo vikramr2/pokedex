@@ -17,7 +17,7 @@ export async function GET(
     }
 
     const result = await query(
-      'SELECT * FROM pokemon WHERE "#" = $1',
+      'SELECT * FROM pokemon WHERE `#` = ?',
       [pokemonId]
     );
 
