@@ -9,15 +9,78 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
     const name = searchParams.get('name');
 
+    // Type filters
+    const types = searchParams.get('types')?.split(',').filter(Boolean);
+
+    // Stat range filters
+    const minHp = searchParams.get('minHp');
+    const maxHp = searchParams.get('maxHp');
+    const minAttack = searchParams.get('minAttack');
+    const maxAttack = searchParams.get('maxAttack');
+    const minDefense = searchParams.get('minDefense');
+    const maxDefense = searchParams.get('maxDefense');
+    const minSpeed = searchParams.get('minSpeed');
+    const maxSpeed = searchParams.get('maxSpeed');
+
     let countQuery = 'SELECT COUNT(*) as count FROM pokemon';
     let dataQuery = 'SELECT * FROM pokemon';
     const queryParams: any[] = [];
+    const conditions: string[] = [];
 
     // Add name filter if provided
     if (name) {
-      countQuery += ' WHERE `name` LIKE ?';
-      dataQuery += ' WHERE `name` LIKE ?';
+      conditions.push('`name` LIKE ?');
       queryParams.push(`%${name}%`);
+    }
+
+    // Add type filters
+    if (types && types.length > 0) {
+      const typeConditions = types.map(() => '(`type1` = ? OR `type2` = ?)').join(' OR ');
+      conditions.push(`(${typeConditions})`);
+      types.forEach(type => {
+        queryParams.push(type, type);
+      });
+    }
+
+    // Add stat range filters
+    if (minHp) {
+      conditions.push('`hp` >= ?');
+      queryParams.push(parseInt(minHp));
+    }
+    if (maxHp) {
+      conditions.push('`hp` <= ?');
+      queryParams.push(parseInt(maxHp));
+    }
+    if (minAttack) {
+      conditions.push('`attack` >= ?');
+      queryParams.push(parseInt(minAttack));
+    }
+    if (maxAttack) {
+      conditions.push('`attack` <= ?');
+      queryParams.push(parseInt(maxAttack));
+    }
+    if (minDefense) {
+      conditions.push('`defense` >= ?');
+      queryParams.push(parseInt(minDefense));
+    }
+    if (maxDefense) {
+      conditions.push('`defense` <= ?');
+      queryParams.push(parseInt(maxDefense));
+    }
+    if (minSpeed) {
+      conditions.push('`speed` >= ?');
+      queryParams.push(parseInt(minSpeed));
+    }
+    if (maxSpeed) {
+      conditions.push('`speed` <= ?');
+      queryParams.push(parseInt(maxSpeed));
+    }
+
+    // Build WHERE clause
+    if (conditions.length > 0) {
+      const whereClause = ' WHERE ' + conditions.join(' AND ');
+      countQuery += whereClause;
+      dataQuery += whereClause;
     }
 
     // Get total count

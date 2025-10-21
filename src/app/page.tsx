@@ -23,10 +23,61 @@ interface PaginationData {
   totalPages: number;
 }
 
+const POKEMON_TYPES = [
+  'normal', 'fire', 'water', 'electric', 'grass', 'ice',
+  'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug',
+  'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'
+];
+
+interface Filters {
+  types: string[];
+  minHp: number;
+  maxHp: number;
+  minAttack: number;
+  maxAttack: number;
+  minDefense: number;
+  maxDefense: number;
+  minSpeed: number;
+  maxSpeed: number;
+}
+
+interface StatRanges {
+  minHp: number;
+  maxHp: number;
+  minAttack: number;
+  maxAttack: number;
+  minDefense: number;
+  maxDefense: number;
+  minSpeed: number;
+  maxSpeed: number;
+}
+
 export default function Home() {
   const [pokemon, setPokemon] = useState<Pokemon[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [statRanges, setStatRanges] = useState<StatRanges>({
+    minHp: 0,
+    maxHp: 255,
+    minAttack: 0,
+    maxAttack: 255,
+    minDefense: 0,
+    maxDefense: 255,
+    minSpeed: 0,
+    maxSpeed: 255,
+  });
+  const [filters, setFilters] = useState<Filters>({
+    types: [],
+    minHp: 0,
+    maxHp: 255,
+    minAttack: 0,
+    maxAttack: 255,
+    minDefense: 0,
+    maxDefense: 255,
+    minSpeed: 0,
+    maxSpeed: 255,
+  });
   const [pagination, setPagination] = useState<PaginationData>({
     page: 1,
     limit: 20,
@@ -34,7 +85,7 @@ export default function Home() {
     totalPages: 0,
   });
 
-  const fetchPokemon = async (page: number = 1, name: string = '') => {
+  const fetchPokemon = async (page: number = 1, name: string = '', currentFilters: Filters = filters) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -45,6 +96,21 @@ export default function Home() {
       if (name) {
         params.append('name', name);
       }
+
+      // Add type filters
+      if (currentFilters.types.length > 0) {
+        params.append('types', currentFilters.types.join(','));
+      }
+
+      // Add stat filters (only if not default values)
+      if (currentFilters.minHp > statRanges.minHp) params.append('minHp', currentFilters.minHp.toString());
+      if (currentFilters.maxHp < statRanges.maxHp) params.append('maxHp', currentFilters.maxHp.toString());
+      if (currentFilters.minAttack > statRanges.minAttack) params.append('minAttack', currentFilters.minAttack.toString());
+      if (currentFilters.maxAttack < statRanges.maxAttack) params.append('maxAttack', currentFilters.maxAttack.toString());
+      if (currentFilters.minDefense > statRanges.minDefense) params.append('minDefense', currentFilters.minDefense.toString());
+      if (currentFilters.maxDefense < statRanges.maxDefense) params.append('maxDefense', currentFilters.maxDefense.toString());
+      if (currentFilters.minSpeed > statRanges.minSpeed) params.append('minSpeed', currentFilters.minSpeed.toString());
+      if (currentFilters.maxSpeed < statRanges.maxSpeed) params.append('maxSpeed', currentFilters.maxSpeed.toString());
 
       const response = await fetch(`/api/pokemon?${params}`);
       const data = await response.json();
@@ -59,17 +125,42 @@ export default function Home() {
   };
 
   useEffect(() => {
+    // Fetch stat ranges on mount
+    const fetchStatRanges = async () => {
+      try {
+        const response = await fetch('/api/pokemon/stats');
+        const data = await response.json();
+        const ranges = data.data;
+
+        setStatRanges(ranges);
+        setFilters(prev => ({
+          ...prev,
+          minHp: ranges.minHp,
+          maxHp: ranges.maxHp,
+          minAttack: ranges.minAttack,
+          maxAttack: ranges.maxAttack,
+          minDefense: ranges.minDefense,
+          maxDefense: ranges.maxDefense,
+          minSpeed: ranges.minSpeed,
+          maxSpeed: ranges.maxSpeed,
+        }));
+      } catch (error) {
+        console.error('Error fetching stat ranges:', error);
+      }
+    };
+
+    fetchStatRanges();
     fetchPokemon();
   }, []);
 
-  // Debounced search - updates as you type
+  // Debounced search - updates as you type or filters change
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchPokemon(1, searchQuery);
+      fetchPokemon(1, searchQuery, filters);
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  }, [searchQuery, filters]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +168,30 @@ export default function Home() {
   };
 
   const handlePageChange = (newPage: number) => {
-    fetchPokemon(newPage, searchQuery);
+    fetchPokemon(newPage, searchQuery, filters);
+  };
+
+  const toggleType = (type: string) => {
+    setFilters(prev => ({
+      ...prev,
+      types: prev.types.includes(type)
+        ? prev.types.filter(t => t !== type)
+        : [...prev.types, type]
+    }));
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      types: [],
+      minHp: statRanges.minHp,
+      maxHp: statRanges.maxHp,
+      minAttack: statRanges.minAttack,
+      maxAttack: statRanges.maxAttack,
+      minDefense: statRanges.minDefense,
+      maxDefense: statRanges.maxDefense,
+      minSpeed: statRanges.minSpeed,
+      maxSpeed: statRanges.maxSpeed,
+    });
   };
 
   const getTypeColor = (type: string) => {
@@ -132,20 +246,170 @@ export default function Home() {
             >
               Search
             </button>
-            {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setShowFilters(!showFilters)}
+              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+            >
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </button>
+            {(searchQuery || filters.types.length > 0) && (
               <button
                 type="button"
                 onClick={() => {
                   setSearchQuery('');
-                  fetchPokemon(1, '');
+                  resetFilters();
                 }}
                 className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
               >
-                Clear
+                Clear All
               </button>
             )}
           </div>
         </form>
+
+        {/* Advanced Filters Panel */}
+        {showFilters && (
+          <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
+              Advanced Filters
+            </h2>
+
+            {/* Type Filters */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-300">
+                Types
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {POKEMON_TYPES.map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => toggleType(type)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all text-white ${getTypeColor(type)} ${
+                      filters.types.includes(type)
+                        ? 'scale-105 ring-4 ring-offset-2 ring-white dark:ring-gray-800'
+                        : 'opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Stat Range Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* HP Range */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                  HP: {filters.minHp} - {filters.maxHp}
+                </h3>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min={statRanges.minHp}
+                    max={statRanges.maxHp}
+                    value={filters.minHp}
+                    onChange={(e) => setFilters(prev => ({ ...prev, minHp: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                  <input
+                    type="range"
+                    min={statRanges.minHp}
+                    max={statRanges.maxHp}
+                    value={filters.maxHp}
+                    onChange={(e) => setFilters(prev => ({ ...prev, maxHp: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Attack Range */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                  Attack: {filters.minAttack} - {filters.maxAttack}
+                </h3>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min={statRanges.minAttack}
+                    max={statRanges.maxAttack}
+                    value={filters.minAttack}
+                    onChange={(e) => setFilters(prev => ({ ...prev, minAttack: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                  <input
+                    type="range"
+                    min={statRanges.minAttack}
+                    max={statRanges.maxAttack}
+                    value={filters.maxAttack}
+                    onChange={(e) => setFilters(prev => ({ ...prev, maxAttack: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Defense Range */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                  Defense: {filters.minDefense} - {filters.maxDefense}
+                </h3>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min={statRanges.minDefense}
+                    max={statRanges.maxDefense}
+                    value={filters.minDefense}
+                    onChange={(e) => setFilters(prev => ({ ...prev, minDefense: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                  <input
+                    type="range"
+                    min={statRanges.minDefense}
+                    max={statRanges.maxDefense}
+                    value={filters.maxDefense}
+                    onChange={(e) => setFilters(prev => ({ ...prev, maxDefense: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Speed Range */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                  Speed: {filters.minSpeed} - {filters.maxSpeed}
+                </h3>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min={statRanges.minSpeed}
+                    max={statRanges.maxSpeed}
+                    value={filters.minSpeed}
+                    onChange={(e) => setFilters(prev => ({ ...prev, minSpeed: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                  <input
+                    type="range"
+                    min={statRanges.minSpeed}
+                    max={statRanges.maxSpeed}
+                    value={filters.maxSpeed}
+                    onChange={(e) => setFilters(prev => ({ ...prev, maxSpeed: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="mt-6 px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+            >
+              Reset All Filters
+            </button>
+          </div>
+        )}
 
         {/* Loading State */}
         {loading && (
