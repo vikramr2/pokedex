@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 
 interface Pokemon {
@@ -25,6 +25,7 @@ interface PaginationData {
 
 export default function Home() {
   const [pokemon, setPokemon] = useState<Pokemon[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [pagination, setPagination] = useState<PaginationData>({
     page: 1,
@@ -35,6 +36,7 @@ export default function Home() {
 
   const fetchPokemon = async (page: number = 1, name: string = '') => {
     try {
+      setLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
         limit: pagination.limit.toString(),
@@ -52,6 +54,8 @@ export default function Home() {
       setPagination(data.pagination);
     } catch (error) {
       console.error('Error fetching pokemon:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -75,6 +79,30 @@ export default function Home() {
 
   const handlePageChange = (newPage: number) => {
     fetchPokemon(newPage, searchQuery);
+  };
+
+  const getTypeColor = (type: string) => {
+    const colors: { [key: string]: string } = {
+      normal: 'bg-gray-400',
+      fire: 'bg-red-500',
+      water: 'bg-blue-500',
+      electric: 'bg-yellow-400',
+      grass: 'bg-green-500',
+      ice: 'bg-cyan-300',
+      fighting: 'bg-red-700',
+      poison: 'bg-purple-500',
+      ground: 'bg-yellow-600',
+      flying: 'bg-indigo-400',
+      psychic: 'bg-pink-500',
+      bug: 'bg-lime-500',
+      rock: 'bg-yellow-700',
+      ghost: 'bg-purple-700',
+      dragon: 'bg-indigo-700',
+      dark: 'bg-gray-700',
+      steel: 'bg-gray-500',
+      fairy: 'bg-pink-300',
+    };
+    return colors[type.toLowerCase()] || 'bg-gray-400';
   };
 
   const getPokemonImageUrl = (id: number, name: string) => {
@@ -108,52 +136,82 @@ export default function Home() {
           </div>
         </form>
 
-        {/* Pokemon Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
-          {pokemon.map((p) => (
-            <div>
-              <div className="text-center mb-4">
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  #{p.id.toString().padStart(4, '0')}
-                </span>
-                <div className="relative w-full h-48 mb-2">
-                  <Image
-                    src={getPokemonImageUrl(p.id, p.name)}
-                    alt={p.name}
-                    fill
-                    className="object-contain"
-                    unoptimized
-                  />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 dark:text-white capitalize">
-                  {p.name}
-                </h3>
-              </div>
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+          </div>
+        )}
 
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>HP:</span>
-                  <span className="font-semibold">{p.hp}</span>
+        {/* Pokemon Grid */}
+        {!loading && (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+              {pokemon.map((p) => (
+                <div>
+                  <div className="text-center mb-4">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      #{p.id.toString().padStart(4, '0')}
+                    </span>
+                    <div className="relative w-full h-48 mb-2">
+                      <Image
+                        src={getPokemonImageUrl(p.id, p.name)}
+                        alt={p.name}
+                        fill
+                        className="object-contain"
+                        unoptimized
+                      />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-white capitalize">
+                      {p.name}
+                    </h3>
+                  </div>
+
+                  <div className="flex gap-2 justify-center mb-4">
+                    <span
+                      className={`${getTypeColor(
+                        p.type1
+                      )} px-3 py-1 rounded-full text-white text-xs font-semibold uppercase`}
+                    >
+                      {p.type1}
+                    </span>
+                    {p.type2 && (
+                      <span
+                        className={`${getTypeColor(
+                          p.type2
+                        )} px-3 py-1 rounded-full text-white text-xs font-semibold uppercase`}
+                      >
+                        {p.type2}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                      <span>HP:</span>
+                      <span className="font-semibold">{p.hp}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                      <span>Attack:</span>
+                      <span className="font-semibold">{p.attack}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                      <span>Defense:</span>
+                      <span className="font-semibold">{p.defense}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                      <span>Speed:</span>
+                      <span className="font-semibold">{p.speed}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>Attack:</span>
-                  <span className="font-semibold">{p.attack}</span>
-                </div>
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>Defense:</span>
-                  <span className="font-semibold">{p.defense}</span>
-                </div>
-                <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                  <span>Speed:</span>
-                  <span className="font-semibold">{p.speed}</span>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
 
         {/* Pagination */}
-        {pokemon.length > 0 && (
+        {!loading && pokemon.length > 0 && (
           <div className="flex items-center justify-center gap-4">
             <button
               onClick={() => handlePageChange(pagination.page - 1)}
@@ -172,6 +230,15 @@ export default function Home() {
             >
               Next
             </button>
+          </div>
+        )}
+
+        {/* No Results */}
+        {pokemon.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-600 dark:text-gray-400">
+              No Pokemon found. Try a different search.
+            </p>
           </div>
         )}
       </div>
