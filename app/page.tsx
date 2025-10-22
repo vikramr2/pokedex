@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 interface Pokemon {
   id: number;
@@ -148,7 +149,11 @@ export default function Home() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
               {pokemon.map((p) => (
-                <div>
+                <Link
+                  key={p.id}
+                  href={`/pokemon/${p.id}`}
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-all hover:scale-105 cursor-pointer"
+                >
                   <div className="text-center mb-4">
                     <span className="text-sm text-gray-500 dark:text-gray-400">
                       #{p.id.toString().padStart(4, '0')}
@@ -204,7 +209,7 @@ export default function Home() {
                       <span className="font-semibold">{p.speed}</span>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </>
