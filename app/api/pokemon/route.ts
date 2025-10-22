@@ -10,6 +10,16 @@ export async function GET(request: NextRequest) {
         const types = searchParams.get('types')?.split(',').filter(Boolean)
         const name = searchParams.get('name');
 
+        // Stat range filters
+        const minHp = searchParams.get('minHp');
+        const maxHp = searchParams.get('maxHp');
+        const minAttack = searchParams.get('minAttack');
+        const maxAttack = searchParams.get('maxAttack');
+        const minDefense = searchParams.get('minDefense');
+        const maxDefense = searchParams.get('maxDefense');
+        const minSpeed = searchParams.get('minSpeed');
+        const maxSpeed = searchParams.get('maxSpeed');
+
         // Base queries
         let countQuery = 'SELECT COUNT(*) as count FROM pokemon';
         let dataQuery = 'SELECT * FROM pokemon';
@@ -29,6 +39,40 @@ export async function GET(request: NextRequest) {
         if (name) {
             conditions.push('`name` LIKE ?');
             queryParams.push(`%${name}%`);
+        }
+
+        // Add stat range filters
+        if (minHp) {
+            conditions.push('`hp` >= ?');
+            queryParams.push(parseInt(minHp));
+        }
+        if (maxHp) {
+            conditions.push('`hp` <= ?');
+            queryParams.push(parseInt(maxHp));
+        }
+        if (minAttack) {
+            conditions.push('`attack` >= ?');
+            queryParams.push(parseInt(minAttack));
+        }
+        if (maxAttack) {
+            conditions.push('`attack` <= ?');
+            queryParams.push(parseInt(maxAttack));
+        }
+        if (minDefense) {
+            conditions.push('`defense` >= ?');
+            queryParams.push(parseInt(minDefense));
+        }
+        if (maxDefense) {
+            conditions.push('`defense` <= ?');
+            queryParams.push(parseInt(maxDefense));
+        }
+        if (minSpeed) {
+            conditions.push('`speed` >= ?');
+            queryParams.push(parseInt(minSpeed));
+        }
+        if (maxSpeed) {
+            conditions.push('`speed` <= ?');
+            queryParams.push(parseInt(maxSpeed));
         }
 
         // Build WHERE clause
