@@ -24,18 +24,48 @@ interface PaginationData {
   totalPages: number;
 }
 
+interface Filters {
+  types: string[];
+  minHp: number;
+  maxHp: number;
+  minAttack: number;
+  maxAttack: number;
+  minDefense: number;
+  maxDefense: number;
+  minSpeed: number;
+  maxSpeed: number;
+}
+
+const POKEMON_TYPES = [
+  'normal', 'fire', 'water', 'electric', 'grass', 'ice',
+  'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug',
+  'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'
+];
+
 export default function Home() {
   const [pokemon, setPokemon] = useState<Pokemon[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
   const [pagination, setPagination] = useState<PaginationData>({
     page: 1,
     limit: 20,
     total: 0,
     totalPages: 0,
   });
+  const [filters, setFilters] = useState<Filters>({
+    types: [],
+    minHp: 0,
+    maxHp: 255,
+    minAttack: 0,
+    maxAttack: 255,
+    minDefense: 0,
+    maxDefense: 255,
+    minSpeed: 0,
+    maxSpeed: 255,
+  });
 
-  const fetchPokemon = async (page: number = 1, name: string = '') => {
+  const fetchPokemon = async (page: number = 1, name: string = '', currentFilters: Filters = filters) => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -46,6 +76,21 @@ export default function Home() {
       if (name) {
         params.append('name', name);
       }
+
+      // Add type filters
+      if (currentFilters.types.length > 0) {
+        params.append('types', currentFilters.types.join(','));
+      }
+
+      // Add stat filters (only if not default values)
+      if (currentFilters.minHp > 0) params.append('minHp', currentFilters.minHp.toString());
+      if (currentFilters.maxHp < 255) params.append('maxHp', currentFilters.maxHp.toString());
+      if (currentFilters.minAttack > 0) params.append('minAttack', currentFilters.minAttack.toString());
+      if (currentFilters.maxAttack < 255) params.append('maxAttack', currentFilters.maxAttack.toString());
+      if (currentFilters.minDefense > 0) params.append('minDefense', currentFilters.minDefense.toString());
+      if (currentFilters.maxDefense < 255) params.append('maxDefense', currentFilters.maxDefense.toString());
+      if (currentFilters.minSpeed > 0) params.append('minSpeed', currentFilters.minSpeed.toString());
+      if (currentFilters.maxSpeed < 255) params.append('maxSpeed', currentFilters.maxSpeed.toString());
 
       const response = await fetch(`/api/pokemon?${params}`);
       const data = await response.json();
@@ -67,11 +112,11 @@ export default function Home() {
   // Debounced search - updates as you type or filters change
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchPokemon(1, searchQuery);
+      fetchPokemon(1, searchQuery, filters);
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  }, [searchQuery, filters]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +126,30 @@ export default function Home() {
   const handlePageChange = (newPage: number) => {
     fetchPokemon(newPage, searchQuery);
   };
+
+  const toggleType = (type: string) => {
+    setFilters(prev => ({
+      ...prev,
+      types: prev.types.includes(type)
+        ? prev.types.filter(t => t !== type)
+        : [...prev.types, type]
+    }));
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      types: [],
+      minHp: 0,
+      maxHp: 255,
+      minAttack: 0,
+      maxAttack: 255,
+      minDefense: 0,
+      maxDefense: 255,
+      minSpeed: 0,
+      maxSpeed: 255,
+    });
+  };
+
 
   const getTypeColor = (type: string) => {
     const colors: { [key: string]: string } = {
@@ -134,6 +203,25 @@ export default function Home() {
             >
               Search
             </button>
+            <button
+              type="button"
+              onClick={() => setShowFilters(!showFilters)}
+              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+            >
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </button>
+            {(searchQuery || filters.types.length > 0) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  resetFilters();
+                }}
+                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+              >
+                Clear All
+              </button>
+            )}
           </div>
         </form>
 
