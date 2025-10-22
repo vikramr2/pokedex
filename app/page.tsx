@@ -16,15 +16,28 @@ interface Pokemon {
   speed: number;
 }
 
+interface PaginationData {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export default function Home() {
   const [pokemon, setPokemon] = useState<Pokemon[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [pagination, setPagination] = useState<PaginationData>({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0,
+  });
 
   const fetchPokemon = async (page: number = 1, name: string = '') => {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '20',
+        limit: pagination.limit.toString(),
       });
 
       if (name) {
@@ -36,6 +49,7 @@ export default function Home() {
       console.log(data);
 
       setPokemon(data.data);
+      setPagination(data.pagination);
     } catch (error) {
       console.error('Error fetching pokemon:', error);
     }
@@ -57,6 +71,10 @@ export default function Home() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // Search already happens via useEffect, this just prevents page reload
+  };
+
+  const handlePageChange = (newPage: number) => {
+    fetchPokemon(newPage, searchQuery);
   };
 
   const getPokemonImageUrl = (id: number, name: string) => {
@@ -133,6 +151,29 @@ export default function Home() {
             </div>
           ))}
         </div>
+
+        {/* Pagination */}
+        {pokemon.length > 0 && (
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page === 1}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-gray-700 dark:text-gray-300">
+              Page {pagination.page} of {pagination.totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page === pagination.totalPages}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
