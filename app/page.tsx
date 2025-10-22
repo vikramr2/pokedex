@@ -225,6 +225,149 @@ export default function Home() {
           </div>
         </form>
 
+        {/* Advanced Filters Panel */}
+        {showFilters && (
+          <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
+              Advanced Filters
+            </h2>
+
+            {/* Type Filters */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-300">
+                Types
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {POKEMON_TYPES.map(type => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => toggleType(type)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all text-white ${getTypeColor(type)} ${
+                      filters.types.includes(type)
+                        ? 'scale-105 ring-4 ring-offset-2 ring-white dark:ring-gray-800'
+                        : 'opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Stat Range Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* HP Range */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                  HP: {filters.minHp} - {filters.maxHp}
+                </h3>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={255}
+                    value={filters.minHp}
+                    onChange={(e) => setFilters(prev => ({ ...prev, minHp: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={255}
+                    value={filters.maxHp}
+                    onChange={(e) => setFilters(prev => ({ ...prev, maxHp: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Attack Range */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                  Attack: {filters.minAttack} - {filters.maxAttack}
+                </h3>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={255}
+                    value={filters.minAttack}
+                    onChange={(e) => setFilters(prev => ({ ...prev, minAttack: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={255}
+                    value={filters.maxAttack}
+                    onChange={(e) => setFilters(prev => ({ ...prev, maxAttack: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Defense Range */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                  Defense: {filters.minDefense} - {filters.maxDefense}
+                </h3>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={255}
+                    value={filters.minDefense}
+                    onChange={(e) => setFilters(prev => ({ ...prev, minDefense: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={255}
+                    value={filters.maxDefense}
+                    onChange={(e) => setFilters(prev => ({ ...prev, maxDefense: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              {/* Speed Range */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-300">
+                  Speed: {filters.minSpeed} - {filters.maxSpeed}
+                </h3>
+                <div className="space-y-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={255}
+                    value={filters.minSpeed}
+                    onChange={(e) => setFilters(prev => ({ ...prev, minSpeed: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                  <input
+                    type="range"
+                    min={0}
+                    max={255}
+                    value={filters.maxSpeed}
+                    onChange={(e) => setFilters(prev => ({ ...prev, maxSpeed: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="mt-6 px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+            >
+              Reset All Filters
+            </button>
+          </div>
+        )}
+
         {/* Loading State */}
         {loading && (
           <div className="text-center py-12">
