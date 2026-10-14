@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     let countQuery = 'SELECT COUNT(*) as count FROM pokemon';
     let dataQuery = 'SELECT * FROM pokemon';
-    const queryParams: any[] = [];
+    const queryParams: (string | number)[] = [];
     const conditions: string[] = [];
 
     // Add name filter if provided
